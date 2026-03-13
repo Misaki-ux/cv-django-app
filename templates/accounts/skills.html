@@ -1,0 +1,50 @@
+{% extends "base.html" %}{% load i18n %}{% load widget_tweaks %}
+{% block title %}{% trans "Skills" %}{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-md-3">
+        <div class="sidebar p-3">
+            <nav class="nav flex-column">
+                <a class="nav-link" href="{% url 'profile' %}"><i class="bi bi-person"></i> {% trans "Personal Info" %}</a>
+                <a class="nav-link" href="{% url 'education_list' %}"><i class="bi bi-mortarboard"></i> {% trans "Education" %}</a>
+                <a class="nav-link" href="{% url 'experience_list' %}"><i class="bi bi-briefcase"></i> {% trans "Experience" %}</a>
+                <a class="nav-link active" href="{% url 'skills_manage' %}"><i class="bi bi-tools"></i> {% trans "Skills" %}</a>
+                <a class="nav-link" href="{% url 'languages_manage' %}"><i class="bi bi-translate"></i> {% trans "Languages" %}</a>
+                <a class="nav-link" href="{% url 'privacy_settings' %}"><i class="bi bi-shield-lock"></i> {% trans "Privacy" %}</a>
+            </nav>
+        </div>
+    </div>
+    <div class="col-md-9">
+        <div class="card p-4">
+            <h4 class="mb-4"><i class="bi bi-tools"></i> {% trans "Skills" %}</h4>
+            <form method="post" class="row g-2 mb-4">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add">
+                <div class="col-md-6">{% render_field form.name class="form-control" placeholder="Skill name" %}</div>
+                <div class="col-md-4">{% render_field form.level class="form-select" %}</div>
+                <div class="col-md-2"><button type="submit" class="btn btn-primary w-100"><i class="bi bi-plus"></i></button></div>
+            </form>
+            <div class="row g-2">
+                {% for skill in skills %}
+                <div class="col-md-6">
+                    <div class="border rounded p-2 d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ skill.name }}</strong>
+                            <div class="progress mt-1" style="height:6px;width:100px;">
+                                <div class="progress-bar" style="width:{{ skill.level }}0%"></div>
+                            </div>
+                        </div>
+                        <form method="post" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="delete">
+                            <input type="hidden" name="skill_id" value="{{ skill.pk }}">
+                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-x"></i></button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
