@@ -1,0 +1,26 @@
+{% extends "base.html" %}{% load i18n %}
+{% block title %}{% trans "AI Reviews" %}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2><i class="bi bi-clipboard-data"></i> {% trans "AI Reviews" %}</h2>
+</div>
+{% for review in reviews %}
+<div class="card p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <strong>{{ review.cv.title }}</strong>
+            <small class="text-muted d-block">{{ review.created_at|date:"M d, Y H:i" }}</small>
+        </div>
+        <div>
+            <span class="badge {% if review.overall_score >= 70 %}bg-success{% elif review.overall_score >= 50 %}bg-warning text-dark{% else %}bg-danger{% endif %}">{{ review.overall_score }}/100</span>
+            <a href="{% url 'review_detail' pk=review.pk %}" class="btn btn-sm btn-outline-primary ms-2"><i class="bi bi-eye"></i></a>
+        </div>
+    </div>
+</div>
+{% empty %}
+<div class="text-center py-5">
+    <p class="text-muted">{% trans "No reviews yet. Review one of your CVs to get started." %}</p>
+    <a href="{% url 'cv_list' %}" class="btn btn-primary">{% trans "Go to My CVs" %}</a>
+</div>
+{% endfor %}
+{% endblock %}

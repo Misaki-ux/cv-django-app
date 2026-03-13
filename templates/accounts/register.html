@@ -1,0 +1,55 @@
+{% extends "base.html" %}{% load i18n %}{% load widget_tweaks %}
+{% block title %}{% trans "Register" %}{% endblock %}
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-md-6">
+        <div class="card p-4">
+            <h3 class="text-center mb-4"><i class="bi bi-person-plus"></i> {% trans "Create Account" %}</h3>
+            <form method="post">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-medium">{{ form.first_name.label }}</label>
+                        {% render_field form.first_name class="form-control" %}
+                        {% for error in form.first_name.errors %}<small class="text-danger">{{ error }}</small>{% endfor %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-medium">{{ form.last_name.label }}</label>
+                        {% render_field form.last_name class="form-control" %}
+                        {% for error in form.last_name.errors %}<small class="text-danger">{{ error }}</small>{% endfor %}
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-medium">{{ form.username.label }}</label>
+                    {% render_field form.username class="form-control" %}
+                    {% for error in form.username.errors %}<small class="text-danger">{{ error }}</small>{% endfor %}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-medium">{{ form.email.label }}</label>
+                    {% render_field form.email class="form-control" type="email" %}
+                    {% for error in form.email.errors %}<small class="text-danger">{{ error }}</small>{% endfor %}
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-medium">{{ form.password1.label }}</label>
+                        {% render_field form.password1 class="form-control" %}
+                        {% for error in form.password1.errors %}<small class="text-danger">{{ error }}</small>{% endfor %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-medium">{{ form.password2.label }}</label>
+                        {% render_field form.password2 class="form-control" %}
+                        {% for error in form.password2.errors %}<small class="text-danger">{{ error }}</small>{% endfor %}
+                    </div>
+                </div>
+                <div class="mb-3 form-check">
+                    {{ form.consent }}
+                    <label class="form-check-label small">{{ form.consent.label }}</label>
+                    {% for error in form.consent.errors %}<br><small class="text-danger">{{ error }}</small>{% endfor %}
+                </div>
+                <button type="submit" class="btn btn-primary w-100 py-2">{% trans "Create Account" %}</button>
+            </form>
+            <p class="text-center mt-3 text-muted">{% trans "Already have an account?" %} <a href="{% url 'login' %}">{% trans "Login" %}</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

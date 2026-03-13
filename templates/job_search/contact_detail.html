@@ -1,0 +1,28 @@
+{% extends "base.html" %}{% load i18n %}
+{% block title %}{{ contact.business_name }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card p-4">
+            <h4>{{ contact.business_name }}</h4>
+            <span class="badge bg-light text-dark mb-3">{{ contact.source }}</span>
+            <div class="row g-3">
+                {% if contact.address %}<div class="col-12"><i class="bi bi-geo-alt"></i> {{ contact.address }}</div>{% endif %}
+                {% if contact.phone %}<div class="col-md-6"><i class="bi bi-telephone"></i> {{ contact.phone }}</div>{% endif %}
+                {% if contact.email %}<div class="col-md-6"><i class="bi bi-envelope"></i> <a href="mailto:{{ contact.email }}">{{ contact.email }}</a></div>{% endif %}
+                {% if contact.website %}<div class="col-12"><i class="bi bi-globe"></i> <a href="{{ contact.website }}" target="_blank">{{ contact.website }}</a></div>{% endif %}
+                {% if contact.linkedin_url %}<div class="col-12"><i class="bi bi-linkedin"></i> <a href="{{ contact.linkedin_url }}" target="_blank">LinkedIn Profile</a></div>{% endif %}
+                {% if contact.contact_person %}<div class="col-md-6"><i class="bi bi-person"></i> {{ contact.contact_person }} {% if contact.contact_role %}({{ contact.contact_role }}){% endif %}</div>{% endif %}
+                {% if contact.rating %}<div class="col-md-6"><i class="bi bi-star-fill text-warning"></i> {{ contact.rating }}/5</div>{% endif %}
+            </div>
+            <hr>
+            <h6>{% trans "Notes" %}</h6>
+            <form method="post">
+                {% csrf_token %}
+                <textarea name="notes" class="form-control mb-2" rows="3">{{ contact.notes }}</textarea>
+                <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-check-lg"></i> {% trans "Save Notes" %}</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

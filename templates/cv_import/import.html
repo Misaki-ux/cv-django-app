@@ -1,0 +1,46 @@
+{% extends "base.html" %}{% load i18n %}
+{% block title %}{% trans "Import CV" %}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2><i class="bi bi-upload"></i> {% trans "Import CV" %}</h2>
+    <p class="text-muted">{% trans "Upload your existing CV in PDF or DOCX format. We'll extract the text and help you build a new CV." %}</p>
+</div>
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card p-4">
+            <h5 class="mb-3">{% trans "Upload CV" %}</h5>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label fw-medium">{% trans "Select File" %}</label>
+                    <input type="file" name="cv_file" class="form-control" accept=".pdf,.docx" required>
+                    <small class="text-muted">{% trans "Supported formats: PDF, DOCX (max 10MB)" %}</small>
+                </div>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-upload"></i> {% trans "Upload & Process" %}</button>
+            </form>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card p-4">
+            <h5 class="mb-3">{% trans "Previous Imports" %}</h5>
+            {% for imp in imports %}
+            <div class="border rounded p-2 mb-2 d-flex justify-content-between align-items-center">
+                <div>
+                    <strong class="small">{{ imp.file_name }}</strong>
+                    <small class="d-block text-muted">{{ imp.created_at|date:"M d, Y H:i" }} -
+                    <span class="badge {% if imp.status == 'completed' %}bg-success{% elif imp.status == 'failed' %}bg-danger{% else %}bg-warning{% endif %}">{{ imp.status }}</span></small>
+                </div>
+                <div>
+                    {% if imp.status == 'completed' %}
+                    <a href="{% url 'import_review' pk=imp.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a>
+                    {% endif %}
+                    <form method="post" action="{% url 'import_delete' pk=imp.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button></form>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-muted text-center small">{% trans "No previous imports." %}</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

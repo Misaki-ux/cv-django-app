@@ -1,0 +1,86 @@
+{% extends "base.html" %}{% load i18n %}
+{% block title %}{% trans "Job Search" %}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2><i class="bi bi-geo-alt"></i> {% trans "Job Seeker - Radial Search" %}</h2>
+    <p class="text-muted">{% trans "Find bars and restaurants near you and extract HR contact information." %}</p>
+</div>
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card p-4">
+            <h5 class="mb-3">{% trans "Search" %}</h5>
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label fw-medium">{% trans "Search Query" %}</label>
+                    <input type="text" name="query" class="form-control" value="restaurant bar" placeholder="restaurant, bar, cafe...">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-medium">{% trans "Location" %}</label>
+                    <input type="text" name="location" class="form-control" placeholder="Paris, Lyon, Marseille..." required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-medium">{% trans "Radius (km)" %}</label>
+                    <input type="range" name="radius" class="form-range" min="1" max="50" value="10" id="radiusRange">
+                    <div class="d-flex justify-content-between"><small>1km</small><small id="radiusValue">10km</small><small>50km</small></div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-medium">{% trans "Source" %}</label>
+                    <select name="source" class="form-select">
+                        <option value="google_maps">Google Maps</option>
+                        <option value="pages_jaunes">Pages Jaunes</option>
+                        <option value="linkedin">LinkedIn</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i> {% trans "Search" %}</button>
+            </form>
+        </div>
+        {% if recent_searches %}
+        <div class="card p-4 mt-4">
+            <h6>{% trans "Recent Searches" %}</h6>
+            {% for s in recent_searches %}
+            <a href="{% url 'search_results' pk=s.pk %}" class="d-block small text-decoration-none mb-1">
+                {{ s.query }} - {{ s.location }} <span class="badge bg-secondary">{{ s.results_count }}</span>
+            </a>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    <div class="col-md-8">
+        {% if results %}
+        <div class="card p-4">
+            <h5 class="mb-3">{% trans "Results" %} ({{ results|length }})</h5>
+            {% for r in results %}
+            <div class="border rounded p-3 mb-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="mb-1">{{ r.business_name }}</h6>
+                        {% if r.address %}<p class="small text-muted mb-1"><i class="bi bi-geo-alt"></i> {{ r.address }}</p>{% endif %}
+                        {% if r.phone %}<p class="small mb-1"><i class="bi bi-telephone"></i> {{ r.phone }}</p>{% endif %}
+                        {% if r.email %}<p class="small mb-1"><i class="bi bi-envelope"></i> {{ r.email }}</p>{% endif %}
+                        {% if r.website %}<p class="small mb-1"><i class="bi bi-globe"></i> <a href="{{ r.website }}" target="_blank">{{ r.website|truncatechars:40 }}</a></p>{% endif %}
+                        {% if r.linkedin_url %}<p class="small mb-1"><i class="bi bi-linkedin"></i> <a href="{{ r.linkedin_url }}" target="_blank">LinkedIn</a></p>{% endif %}
+                        {% if r.rating %}<small class="text-warning"><i class="bi bi-star-fill"></i> {{ r.rating }}</small>{% endif %}
+                    </div>
+                    <span class="badge bg-light text-dark">{{ r.source }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="card p-5 text-center">
+            <i class="bi bi-search" style="font-size:3rem;color:var(--text-muted);"></i>
+            <p class="text-muted mt-3">{% trans "Enter a location and click Search to find businesses nearby." %}</p>
+            <small class="text-muted">{% trans "Tip: For Google Maps results, set GOOGLE_MAPS_API_KEY in your environment." %}</small>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.getElementById('radiusRange').addEventListener('input', function() {
+    document.getElementById('radiusValue').textContent = this.value + 'km';
+});
+</script>
+{% endblock %}

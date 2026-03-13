@@ -1,0 +1,106 @@
+{% extends "base.html" %}{% load i18n %}{% load widget_tweaks %}
+{% block title %}{% trans "Edit CV" %} - {{ cv.title }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-pencil-square"></i> {{ cv.title }}</h2>
+    <div>
+        <a href="{% url 'cv_preview' pk=cv.pk %}" class="btn btn-outline-info" target="_blank"><i class="bi bi-eye"></i> {% trans "Preview" %}</a>
+        <a href="{% url 'cv_download_pdf' pk=cv.pk %}" class="btn btn-outline-success"><i class="bi bi-download"></i> PDF</a>
+        <a href="{% url 'review_cv' cv_id=cv.pk %}" class="btn btn-outline-warning"><i class="bi bi-star"></i> {% trans "AI Review" %}</a>
+    </div>
+</div>
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card p-4 mb-4">
+            <h5 class="mb-3">{% trans "Basic Information" %}</h5>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {% for field in form %}
+                {% if field.name != "template" %}
+                <div class="mb-3">
+                    <label class="form-label fw-medium small">{{ field.label }}</label>
+                    {% render_field field class="form-control form-control-sm" %}
+                </div>
+                {% endif %}
+                {% endfor %}
+                <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-check-lg"></i> {% trans "Save" %}</button>
+            </form>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <!-- Education -->
+        <div class="card p-4 mb-4">
+            <h5 class="mb-3">{% trans "Education" %}</h5>
+            {% for edu in cv.educations.all %}
+            <div class="border rounded p-2 mb-2 d-flex justify-content-between align-items-start">
+                <div><strong class="small">{{ edu.degree }}</strong><br><small class="text-muted">{{ edu.institution }}</small></div>
+                <form method="post" action="{% url 'cv_delete_item' pk=cv.pk item_type='education' item_id=edu.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-danger"><i class="bi bi-x"></i></button></form>
+            </div>
+            {% endfor %}
+            <form method="post" action="{% url 'cv_add_education' pk=cv.pk %}" class="mt-2">
+                {% csrf_token %}
+                <div class="row g-2">
+                    <div class="col-6">{% render_field edu_form.institution class="form-control form-control-sm" placeholder="Institution" %}</div>
+                    <div class="col-6">{% render_field edu_form.degree class="form-control form-control-sm" placeholder="Degree" %}</div>
+                    <div class="col-6">{% render_field edu_form.start_date class="form-control form-control-sm" placeholder="Start (e.g. 2020)" %}</div>
+                    <div class="col-6">{% render_field edu_form.end_date class="form-control form-control-sm" placeholder="End (e.g. 2024)" %}</div>
+                    <div class="col-12"><button class="btn btn-sm btn-outline-primary w-100"><i class="bi bi-plus"></i> {% trans "Add Education" %}</button></div>
+                </div>
+            </form>
+        </div>
+        <!-- Experience -->
+        <div class="card p-4 mb-4">
+            <h5 class="mb-3">{% trans "Experience" %}</h5>
+            {% for exp in cv.experiences.all %}
+            <div class="border rounded p-2 mb-2 d-flex justify-content-between align-items-start">
+                <div><strong class="small">{{ exp.position }}</strong><br><small class="text-muted">{{ exp.company }}</small></div>
+                <form method="post" action="{% url 'cv_delete_item' pk=cv.pk item_type='experience' item_id=exp.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-danger"><i class="bi bi-x"></i></button></form>
+            </div>
+            {% endfor %}
+            <form method="post" action="{% url 'cv_add_experience' pk=cv.pk %}" class="mt-2">
+                {% csrf_token %}
+                <div class="row g-2">
+                    <div class="col-6">{% render_field exp_form.company class="form-control form-control-sm" placeholder="Company" %}</div>
+                    <div class="col-6">{% render_field exp_form.position class="form-control form-control-sm" placeholder="Position" %}</div>
+                    <div class="col-6">{% render_field exp_form.start_date class="form-control form-control-sm" placeholder="Start" %}</div>
+                    <div class="col-6">{% render_field exp_form.end_date class="form-control form-control-sm" placeholder="End" %}</div>
+                    <div class="col-12">{% render_field exp_form.description class="form-control form-control-sm" placeholder="Description" rows="2" %}</div>
+                    <div class="col-12"><button class="btn btn-sm btn-outline-primary w-100"><i class="bi bi-plus"></i> {% trans "Add Experience" %}</button></div>
+                </div>
+            </form>
+        </div>
+        <!-- Skills -->
+        <div class="card p-4 mb-4">
+            <h5 class="mb-3">{% trans "Skills" %}</h5>
+            <div class="d-flex flex-wrap gap-2 mb-2">
+            {% for skill in cv.skills.all %}
+                <span class="badge bg-primary d-flex align-items-center gap-1">{{ skill.name }}
+                    <form method="post" action="{% url 'cv_delete_item' pk=cv.pk item_type='skill' item_id=skill.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm p-0 text-white"><i class="bi bi-x"></i></button></form>
+                </span>
+            {% endfor %}
+            </div>
+            <form method="post" action="{% url 'cv_add_skill' pk=cv.pk %}" class="row g-2">
+                {% csrf_token %}
+                <div class="col-8">{% render_field skill_form.name class="form-control form-control-sm" placeholder="Skill name" %}</div>
+                <div class="col-4"><button class="btn btn-sm btn-outline-primary w-100"><i class="bi bi-plus"></i> {% trans "Add" %}</button></div>
+            </form>
+        </div>
+        <!-- Languages -->
+        <div class="card p-4">
+            <h5 class="mb-3">{% trans "Languages" %}</h5>
+            {% for lang in cv.languages.all %}
+            <div class="border rounded p-2 mb-2 d-flex justify-content-between">
+                <span>{{ lang.name }} <small class="text-muted">({{ lang.proficiency }})</small></span>
+                <form method="post" action="{% url 'cv_delete_item' pk=cv.pk item_type='language' item_id=lang.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-danger"><i class="bi bi-x"></i></button></form>
+            </div>
+            {% endfor %}
+            <form method="post" action="{% url 'cv_add_language' pk=cv.pk %}" class="row g-2">
+                {% csrf_token %}
+                <div class="col-5">{% render_field lang_form.name class="form-control form-control-sm" placeholder="Language" %}</div>
+                <div class="col-4">{% render_field lang_form.proficiency class="form-control form-control-sm" placeholder="Level" %}</div>
+                <div class="col-3"><button class="btn btn-sm btn-outline-primary w-100"><i class="bi bi-plus"></i></button></div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+*.sqlite3
+db.sqlite3
+*.pyc
+.env
+media/
+staticfiles/
+*.log
+.DS_Store
+venv/
+.venv/
+node_modules/
+write_templates.py
+write_pdf_templates.py
+write_remaining.py

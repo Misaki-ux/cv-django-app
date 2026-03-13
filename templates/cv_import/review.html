@@ -1,0 +1,46 @@
+{% extends "base.html" %}{% load i18n %}
+{% block title %}{% trans "Review Import" %}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2><i class="bi bi-file-earmark-check"></i> {% trans "Review Imported CV" %} - {{ imported.file_name }}</h2>
+</div>
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card p-4">
+            <h5 class="mb-3">{% trans "Extracted Text" %}</h5>
+            <pre class="bg-light p-3 rounded" style="max-height:500px;overflow-y:auto;white-space:pre-wrap;font-size:0.85rem;">{{ imported.extracted_text|default:"No text extracted." }}</pre>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card p-4">
+            <h5 class="mb-3">{% trans "Parsed Data" %}</h5>
+            {% if imported.parsed_data %}
+            <div class="mb-3">
+                {% if imported.parsed_data.full_name %}<p><strong>{% trans "Name:" %}</strong> {{ imported.parsed_data.full_name }}</p>{% endif %}
+                {% if imported.parsed_data.email %}<p><strong>{% trans "Email:" %}</strong> {{ imported.parsed_data.email }}</p>{% endif %}
+                {% if imported.parsed_data.phone %}<p><strong>{% trans "Phone:" %}</strong> {{ imported.parsed_data.phone }}</p>{% endif %}
+                {% if imported.parsed_data.summary %}<p><strong>{% trans "Summary:" %}</strong> {{ imported.parsed_data.summary|truncatewords:50 }}</p>{% endif %}
+                {% if imported.parsed_data.skills %}
+                <p><strong>{% trans "Skills:" %}</strong></p>
+                <div class="d-flex flex-wrap gap-1">
+                    {% for skill in imported.parsed_data.skills %}<span class="badge bg-primary">{{ skill }}</span>{% endfor %}
+                </div>
+                {% endif %}
+                {% if imported.parsed_data.languages %}
+                <p class="mt-2"><strong>{% trans "Languages:" %}</strong></p>
+                <div class="d-flex flex-wrap gap-1">
+                    {% for lang in imported.parsed_data.languages %}<span class="badge bg-info">{{ lang }}</span>{% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'import_to_profile' pk=imported.pk %}" class="btn btn-primary"><i class="bi bi-person-plus"></i> {% trans "Import to Profile" %}</a>
+                <a href="{% url 'template_list' %}" class="btn btn-outline-primary"><i class="bi bi-file-earmark-plus"></i> {% trans "Create CV from this" %}</a>
+            </div>
+            {% else %}
+            <p class="text-muted">{% trans "Could not parse structured data from this CV." %}</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,87 @@
+{% extends "base.html" %}{% load i18n %}
+{% block title %}{% trans "Dashboard" %}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2><i class="bi bi-speedometer2"></i> {% trans "Dashboard" %}</h2>
+    <p class="text-muted">{% trans "Welcome back," %} {{ user.get_full_name|default:user.username }}!</p>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card p-3 text-center">
+            <div class="feature-icon mx-auto"><i class="bi bi-file-earmark-text"></i></div>
+            <h3>{{ cvs.count }}</h3>
+            <p class="text-muted mb-0">{% trans "My CVs" %}</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 text-center">
+            <div class="feature-icon mx-auto"><i class="bi bi-star"></i></div>
+            <h3>{{ reviews.count }}</h3>
+            <p class="text-muted mb-0">{% trans "AI Reviews" %}</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 text-center">
+            <div class="feature-icon mx-auto"><i class="bi bi-upload"></i></div>
+            <h3>{{ imports.count }}</h3>
+            <p class="text-muted mb-0">{% trans "Imports" %}</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 text-center">
+            <div class="feature-icon mx-auto"><i class="bi bi-search"></i></div>
+            <h3>{{ searches.count }}</h3>
+            <p class="text-muted mb-0">{% trans "Searches" %}</p>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-8">
+        <div class="card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0"><i class="bi bi-file-earmark-text"></i> {% trans "Recent CVs" %}</h5>
+                <a href="{% url 'template_list' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus"></i> {% trans "New CV" %}</a>
+            </div>
+            {% if cvs %}
+            <div class="list-group list-group-flush">
+                {% for cv in cvs %}
+                <a href="{% url 'cv_edit' pk=cv.pk %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ cv.title }}</strong>
+                        <small class="text-muted d-block">{{ cv.template.name|default:"No template" }} - {{ cv.updated_at|date:"M d, Y" }}</small>
+                    </div>
+                    <span class="badge bg-primary rounded-pill"><i class="bi bi-pencil"></i></span>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted text-center py-3">{% trans "No CVs yet. Create your first one!" %}</p>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-4 mb-4">
+            <h5><i class="bi bi-lightning"></i> {% trans "Quick Actions" %}</h5>
+            <div class="d-grid gap-2 mt-3">
+                <a href="{% url 'template_list' %}" class="btn btn-outline-primary"><i class="bi bi-plus-circle"></i> {% trans "Create New CV" %}</a>
+                <a href="{% url 'import_cv' %}" class="btn btn-outline-primary"><i class="bi bi-upload"></i> {% trans "Import CV" %}</a>
+                <a href="{% url 'job_search' %}" class="btn btn-outline-primary"><i class="bi bi-search"></i> {% trans "Search Jobs" %}</a>
+                <a href="{% url 'profile' %}" class="btn btn-outline-primary"><i class="bi bi-person"></i> {% trans "Edit Profile" %}</a>
+            </div>
+        </div>
+        {% if reviews %}
+        <div class="card p-4">
+            <h5><i class="bi bi-star"></i> {% trans "Latest Reviews" %}</h5>
+            {% for review in reviews %}
+            <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                <small>{{ review.cv.title }}</small>
+                <span class="badge {% if review.overall_score >= 70 %}bg-success{% elif review.overall_score >= 50 %}bg-warning{% else %}bg-danger{% endif %}">{{ review.overall_score }}/100</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

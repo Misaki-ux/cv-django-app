@@ -1,0 +1,29 @@
+{% extends "base.html" %}{% load i18n %}{% load widget_tweaks %}
+{% block title %}{% trans "Create CV" %}{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card p-4">
+            <h4 class="mb-4"><i class="bi bi-plus-circle"></i> {% trans "Create New CV" %} - {{ template.name }}</h4>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {% for field in form %}
+                {% if field.name != "template" %}
+                <div class="mb-3">
+                    <label class="form-label fw-medium">{{ field.label }}</label>
+                    {% if field.name == "summary" or field.name == "address" %}
+                    {% render_field field class="form-control" rows="3" %}
+                    {% else %}
+                    {% render_field field class="form-control" %}
+                    {% endif %}
+                    {% for error in field.errors %}<small class="text-danger">{{ error }}</small>{% endfor %}
+                </div>
+                {% endif %}
+                {% endfor %}
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> {% trans "Create CV" %}</button>
+                <a href="{% url 'template_list' %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
