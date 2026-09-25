@@ -23,7 +23,7 @@ def template_list(request):
 @login_required
 def cv_create(request, template_slug):
     template = get_object_or_404(CVTemplate, slug=template_slug, is_active=True)
-    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    profile, created = UserProfile.objects.get_or_create(user=request.user)
 
     if request.method == 'POST':
         form = CVForm(request.POST, request.FILES)
@@ -43,7 +43,6 @@ def cv_create(request, template_slug):
             'summary': profile.summary,
         }
         form = CVForm(initial=initial)
-        form.fields['template'].initial = template
 
     return render(request, 'cv_builder/cv_create.html', {
         'form': form,
@@ -76,6 +75,23 @@ def cv_edit(request, pk):
         'skill_form': skill_form,
         'lang_form': lang_form,
     })
+
+
+@login_required
+def cv_design_edit(request, pk):
+    cv = get_object_or_404(CV, pk=pk, user=request.user)
+    if request.method == 'POST':
+        from .forms import CVDesignForm
+        form = CVDesignForm(request.POST, instance=cv)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _('Design settings updated!'))
+            return redirect('cv_edit', pk=cv.pk)
+    else:
+        from .forms import CVDesignForm
+        form = CVDesignForm(instance=cv)
+    
+    return render(request, 'cv_builder/cv_design_edit.html', {'form': form, 'cv': cv})
 
 
 @login_required
@@ -135,6 +151,34 @@ def cv_add_language(request, pk):
 
 
 @login_required
+def cv_edit_education(request, item_id):
+    edu = get_object_or_404(CVEducation, pk=item_id, cv__user=request.user)
+    if request.method == 'POST':
+        form = CVEducationForm(request.POST, instance=edu)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _('Education updated!'))
+            return redirect('cv_edit', pk=edu.cv.pk)
+    else:
+        form = CVEducationForm(instance=edu)
+    return render(request, 'cv_builder/cv_edit_education.html', {'form': form, 'edu': edu})
+
+
+@login_required
+def cv_edit_experience(request, item_id):
+    exp = get_object_or_404(CVExperience, pk=item_id, cv__user=request.user)
+    if request.method == 'POST':
+        form = CVExperienceForm(request.POST, instance=exp)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _('Experience updated!'))
+            return redirect('cv_edit', pk=exp.cv.pk)
+    else:
+        form = CVExperienceForm(instance=exp)
+    return render(request, 'cv_builder/cv_edit_experience.html', {'form': form, 'exp': exp})
+
+
+@login_required
 def cv_delete_item(request, pk, item_type, item_id):
     cv = get_object_or_404(CV, pk=pk, user=request.user)
     if request.method == 'POST':
@@ -162,7 +206,7 @@ def cv_preview(request, pk):
 def cv_download_pdf(request, pk):
     cv = get_object_or_404(CV, pk=pk, user=request.user)
     template_name = f'cv_builder/templates_pdf/{cv.template.slug}.html' if cv.template else 'cv_builder/templates_pdf/modern.html'
-    html_string = render_to_string(template_name, {'cv': cv})
+    html_string = render_to_string(template_name, {'cv': cv}, request=request)
 
     html = HTML(string=html_string, base_url=request.build_absolute_uri('/'))
     pdf_bytes = html.write_pdf()
