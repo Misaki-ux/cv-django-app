@@ -7,6 +7,8 @@ from django.http import HttpResponse, JsonResponse
 from django.template.loader import render_to_string
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
+from django.views.decorators.http import require_POST
+from django.db import transaction
 from weasyprint import HTML
 
 from .models import CV, CVTemplate, CVEducation, CVExperience, CVSkill, CVLanguage
@@ -90,8 +92,12 @@ def cv_design_edit(request, pk):
     else:
         from .forms import CVDesignForm
         form = CVDesignForm(instance=cv)
-    
-    return render(request, 'cv_builder/cv_design_edit.html', {'form': form, 'cv': cv})
+
+    return render(request, 'cv_builder/cv_design_edit.html', {
+        'form': form,
+        'cv': cv,
+        'templates': CVTemplate.objects.filter(is_active=True),
+    })
 
 
 @login_required
@@ -137,6 +143,20 @@ def cv_add_skill(request, pk):
 
 
 @login_required
+def cv_edit_skill(request, item_id):
+    skill = get_object_or_404(CVSkill, pk=item_id, cv__user=request.user)
+    if request.method == 'POST':
+        form = CVSkillForm(request.POST, instance=skill)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _('Skill updated!'))
+            return redirect('cv_edit', pk=skill.cv.pk)
+    else:
+        form = CVSkillForm(instance=skill)
+    return render(request, 'cv_builder/cv_edit_skill.html', {'form': form, 'skill': skill})
+
+
+@login_required
 def cv_add_language(request, pk):
     cv = get_object_or_404(CV, pk=pk, user=request.user)
     if request.method == 'POST':
@@ -176,6 +196,59 @@ def cv_edit_experience(request, item_id):
     else:
         form = CVExperienceForm(instance=exp)
     return render(request, 'cv_builder/cv_edit_experience.html', {'form': form, 'exp': exp})
+
+
+@login_required
+@require_POST
+def cv_reorder_experiences(request, pk):
+    cv = get_object_or_404(CV, pk=pk, user=request.user)
+    try:
+        submitted_ids = [int(item_id) for item_id in request.POST.getlist('experience_ids')]
+    except (TypeError, ValueError):
+        submitted_ids = []
+    experiences = list(cv.experiences.all())
+    if len(submitted_ids) != len(experiences) or set(submitted_ids) != {item.pk for item in experiences}:
+        messages.error(request, _('Could not save the experience order. Please try again.'))
+        return redirect('cv_edit', pk=cv.pk)
+
+    by_id = {item.pk: item for item in experiences}
+    for order, item_id in enumerate(submitted_ids):
+        by_id[item_id].order = order
+    CVExperience.objects.bulk_update(experiences, ['order'])
+    messages.success(request, _('Experience order updated!'))
+    return redirect('cv_edit', pk=cv.pk)
+
+
+@login_required
+@require_POST
+def cv_move_experience_to_education(request, item_id):
+    experience = get_object_or_404(CVExperience, pk=item_id, cv__user=request.user)
+    cv = experience.cv
+    description = experience.description
+    if experience.location:
+        location_line = _('Location: %(location)s') % {'location': experience.location}
+        description = f'{location_line}\n{description}'.strip()
+    last_education_order = cv.educations.order_by('-order').values_list('order', flat=True).first()
+    education_end_date = experience.end_date or ('Present' if experience.current else '')
+
+    with transaction.atomic():
+        CVEducation.objects.create(
+            cv=cv,
+            institution=experience.company or experience.position,
+            degree=experience.position or experience.company,
+            start_date=experience.start_date,
+            end_date=education_end_date,
+            description=description,
+            order=0 if last_education_order is None else last_education_order + 1,
+        )
+        experience.delete()
+        for order, remaining in enumerate(cv.experiences.all()):
+            if remaining.order != order:
+                remaining.order = order
+                remaining.save(update_fields=['order'])
+
+    messages.success(request, _('Experience moved to Education.'))
+    return redirect('cv_edit', pk=cv.pk)
 
 
 @login_required
@@ -244,6 +317,8 @@ def cv_duplicate(request, pk):
         phone=original.phone,
         address=original.address,
         summary=original.summary,
+        photo=original.photo,
+        show_photo=original.show_photo,
     )
     for edu in original.educations.all():
         CVEducation.objects.create(

@@ -45,11 +45,22 @@ class CV(models.Model):
     address = models.TextField(_('Address'), blank=True)
     summary = models.TextField(_('Professional Summary'), blank=True)
     photo = models.ImageField(_('Photo'), upload_to='cv_photos/', blank=True)
+    show_photo = models.BooleanField(_('Show photo on CV'), default=True)
     # Metadata
     is_public = models.BooleanField(_('Public'), default=False)
     pdf_file = models.FileField(_('PDF File'), upload_to='cvs/pdf/', blank=True)
+
+    # Custom Design Settings
+    custom_primary_color = models.CharField(_('Custom Primary Color'), max_length=7, blank=True)
+    custom_secondary_color = models.CharField(_('Custom Secondary Color'), max_length=7, blank=True)
+    custom_sidebar_width = models.IntegerField(_('Sidebar Width (%)'), default=35)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def main_width(self):
+        return 100 - (self.custom_sidebar_width or 35)
 
     class Meta:
         verbose_name = _('CV')
