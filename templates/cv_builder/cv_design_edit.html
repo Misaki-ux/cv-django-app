@@ -1,0 +1,73 @@
+{% extends "base.html" %}{% load i18n %}{% load widget_tweaks %}
+{% block title %}{% trans "Edit Template Design" %}{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card p-4">
+            <h4 class="mb-4"><i class="bi bi-palette"></i> {% trans "Edit Template Design" %}</h4>
+            <form method="post">
+                {% csrf_token %}
+                <style>
+                    .template-option { cursor: pointer; transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
+                    .template-option:hover { transform: translateY(-2px); }
+                    .template-option:has(input:checked) { border-color: var(--bs-primary) !important; box-shadow: 0 0 0 .2rem rgba(var(--bs-primary-rgb), .15); }
+                    .template-preview-icon { width: 64px; height: 80px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; }
+                </style>
+                <div class="row g-4">
+                    <div class="col-12">
+                        <div class="form-label fw-medium">{% trans "Choose a CV Template" %}</div>
+                        <div class="row g-3">
+                            {% for template in templates %}
+                            <div class="col-sm-6 col-lg-4">
+                                <label class="card template-option h-100 p-3 {% if template.pk == cv.template_id %}border-primary{% endif %}">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <div class="template-preview-icon" style="background:linear-gradient(135deg, {{ template.primary_color }}, {{ template.secondary_color }});">
+                                            <i class="bi bi-file-earmark-text fs-2" aria-hidden="true"></i>
+                                        </div>
+                                        <input class="form-check-input" type="radio" name="template" value="{{ template.pk }}" aria-label="{{ template.name }}" {% if template.pk == cv.template_id %}checked{% endif %}>
+                                    </div>
+                                    <strong>{{ template.name }}</strong>
+                                    {% if template.description %}<small class="text-muted mt-1">{{ template.description }}</small>{% endif %}
+                                </label>
+                            </div>
+                            {% empty %}
+                            <div class="col-12"><p class="text-muted mb-0">{% trans "No templates are currently available." %}</p></div>
+                            {% endfor %}
+                        </div>
+                        {% for error in form.template.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-medium">{% trans "Primary Color" %}</label>
+                        <div class="d-flex align-items-center gap-2">
+                            {% render_field form.custom_primary_color class="form-control form-control-color w-100" %}
+                        </div>
+                        <small class="text-muted">{% trans "Leave #000000 to use template default." %}</small>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-medium">{% trans "Secondary Color" %}</label>
+                        <div class="d-flex align-items-center gap-2">
+                            {% render_field form.custom_secondary_color class="form-control form-control-color w-100" %}
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label fw-medium">{% trans "Sidebar Width (%)" %}</label>
+                        <div class="d-flex align-items-center gap-3">
+                            {% render_field form.custom_sidebar_width class="form-range" %}
+                            <span id="sidebarValue" class="badge bg-secondary">{{ form.custom_sidebar_width.value|default:35 }}%</span>
+                        </div>
+                        <script>
+                            document.querySelector('input[name="custom_sidebar_width"]').addEventListener('input', function(e) {
+                                document.getElementById('sidebarValue').textContent = e.target.value + '%';
+                            });
+                        </script>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> {% trans "Save Design" %}</button>
+                    <a href="{% url 'cv_edit' pk=cv.pk %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

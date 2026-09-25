@@ -4,6 +4,7 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><i class="bi bi-pencil-square"></i> {{ cv.title }}</h2>
     <div>
+        <a href="{% url 'cv_design_edit' pk=cv.pk %}" class="btn btn-outline-primary"><i class="bi bi-palette"></i> {% trans "Design" %}</a>
         <a href="{% url 'cv_preview' pk=cv.pk %}" class="btn btn-outline-info" target="_blank"><i class="bi bi-eye"></i> {% trans "Preview" %}</a>
         <a href="{% url 'cv_download_pdf' pk=cv.pk %}" class="btn btn-outline-success"><i class="bi bi-download"></i> PDF</a>
         <a href="{% url 'review_cv' cv_id=cv.pk %}" class="btn btn-outline-warning"><i class="bi bi-star"></i> {% trans "AI Review" %}</a>
@@ -17,10 +18,17 @@
                 {% csrf_token %}
                 {% for field in form %}
                 {% if field.name != "template" %}
+                {% if field.name == "show_photo" %}
+                <div class="form-check mb-3">
+                    {% render_field field class="form-check-input" %}
+                    <label class="form-check-label fw-medium small" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                </div>
+                {% else %}
                 <div class="mb-3">
                     <label class="form-label fw-medium small">{{ field.label }}</label>
                     {% render_field field class="form-control form-control-sm" %}
                 </div>
+                {% endif %}
                 {% endif %}
                 {% endfor %}
                 <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-check-lg"></i> {% trans "Save" %}</button>
@@ -29,12 +37,16 @@
     </div>
     <div class="col-md-6">
         <!-- Education -->
-        <div class="card p-4 mb-4">
+        <div class="card p-4 mb-4" id="educationDropZone" data-move-url="{% url 'cv_move_experience_to_education' item_id=0 %}">
             <h5 class="mb-3">{% trans "Education" %}</h5>
+            <p class="small text-muted" id="educationDropHint">{% trans "Drop an experience here to move it into education." %}</p>
             {% for edu in cv.educations.all %}
             <div class="border rounded p-2 mb-2 d-flex justify-content-between align-items-start">
                 <div><strong class="small">{{ edu.degree }}</strong><br><small class="text-muted">{{ edu.institution }}</small></div>
-                <form method="post" action="{% url 'cv_delete_item' pk=cv.pk item_type='education' item_id=edu.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-danger"><i class="bi bi-x"></i></button></form>
+                <div class="d-flex gap-1">
+                    <a href="{% url 'cv_edit_education' item_id=edu.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+                    <form method="post" action="{% url 'cv_delete_item' pk=cv.pk item_type='education' item_id=edu.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-danger"><i class="bi bi-x"></i></button></form>
+                </div>
             </div>
             {% endfor %}
             <form method="post" action="{% url 'cv_add_education' pk=cv.pk %}" class="mt-2">
@@ -50,13 +62,29 @@
         </div>
         <!-- Experience -->
         <div class="card p-4 mb-4">
-            <h5 class="mb-3">{% trans "Experience" %}</h5>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">{% trans "Experience" %}</h5>
+                <span class="small text-muted"><i class="bi bi-grip-vertical"></i> {% trans "Drag to reorder" %}</span>
+            </div>
+            <div id="experienceList">
             {% for exp in cv.experiences.all %}
-            <div class="border rounded p-2 mb-2 d-flex justify-content-between align-items-start">
-                <div><strong class="small">{{ exp.position }}</strong><br><small class="text-muted">{{ exp.company }}</small></div>
-                <form method="post" action="{% url 'cv_delete_item' pk=cv.pk item_type='experience' item_id=exp.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-danger"><i class="bi bi-x"></i></button></form>
+            <div class="experience-item border rounded p-2 mb-2 d-flex justify-content-between align-items-start" draggable="true" data-experience-id="{{ exp.pk }}">
+                <div class="d-flex align-items-start gap-2">
+                    <span class="experience-drag-handle text-muted" title="{% trans 'Drag to reorder or move into Education' %}"><i class="bi bi-grip-vertical"></i></span>
+                    <span><strong class="small">{{ exp.position }}</strong><br><small class="text-muted">{{ exp.company }}</small></span>
+                </div>
+                <div class="d-flex gap-1">
+                    <a href="{% url 'cv_edit_experience' item_id=exp.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+                    <form method="post" action="{% url 'cv_move_experience_to_education' item_id=exp.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-success" title="{% trans 'Move to Education' %}"><i class="bi bi-mortarboard"></i><span class="d-none d-lg-inline ms-1">{% trans "Move" %}</span></button></form>
+                    <form method="post" action="{% url 'cv_delete_item' pk=cv.pk item_type='experience' item_id=exp.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-danger"><i class="bi bi-x"></i></button></form>
+                </div>
             </div>
             {% endfor %}
+            </div>
+            <form id="experienceOrderForm" method="post" action="{% url 'cv_reorder_experiences' pk=cv.pk %}" class="d-none mb-2">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-check-lg"></i> {% trans "Save experience order" %}</button>
+            </form>
             <form method="post" action="{% url 'cv_add_experience' pk=cv.pk %}" class="mt-2">
                 {% csrf_token %}
                 <div class="row g-2">
@@ -74,14 +102,16 @@
             <h5 class="mb-3">{% trans "Skills" %}</h5>
             <div class="d-flex flex-wrap gap-2 mb-2">
             {% for skill in cv.skills.all %}
-                <span class="badge bg-primary d-flex align-items-center gap-1">{{ skill.name }}
+                <span class="badge bg-primary d-flex align-items-center gap-1"><a class="text-white text-decoration-none" href="{% url 'cv_edit_skill' item_id=skill.pk %}" title="{% trans 'Edit skill and level' %}">{{ skill.name }}</a>
+                    <span class="opacity-75">({{ skill.level }}/5)</span>
                     <form method="post" action="{% url 'cv_delete_item' pk=cv.pk item_type='skill' item_id=skill.pk %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm p-0 text-white"><i class="bi bi-x"></i></button></form>
                 </span>
             {% endfor %}
             </div>
             <form method="post" action="{% url 'cv_add_skill' pk=cv.pk %}" class="row g-2">
                 {% csrf_token %}
-                <div class="col-8">{% render_field skill_form.name class="form-control form-control-sm" placeholder="Skill name" %}</div>
+                <div class="col-5">{% render_field skill_form.name class="form-control form-control-sm" placeholder="Skill name" %}</div>
+                <div class="col-3">{% render_field skill_form.level class="form-control form-control-sm" placeholder="Level 1-5" title="Rating from 1 to 5" %}</div>
                 <div class="col-4"><button class="btn btn-sm btn-outline-primary w-100"><i class="bi bi-plus"></i> {% trans "Add" %}</button></div>
             </form>
         </div>
@@ -103,4 +133,71 @@
         </div>
     </div>
 </div>
+<form id="dragMoveExperienceForm" method="post" class="d-none">{% csrf_token %}</form>
+<style>
+    .experience-item { cursor: default; }
+    .experience-item.dragging { opacity: .45; }
+    .experience-drag-handle { cursor: grab; }
+    .education-drop-active { outline: 2px dashed var(--bs-success); outline-offset: 3px; background-color: rgba(var(--bs-success-rgb), .06); }
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const list = document.getElementById('experienceList');
+    const orderForm = document.getElementById('experienceOrderForm');
+    const educationZone = document.getElementById('educationDropZone');
+    const moveForm = document.getElementById('dragMoveExperienceForm');
+    if (!list || !orderForm || !educationZone || !moveForm) return;
+
+    let draggedItem = null;
+    list.querySelectorAll('.experience-item').forEach(function (item) {
+        item.addEventListener('dragstart', function (event) {
+            draggedItem = item;
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', item.dataset.experienceId);
+            item.classList.add('dragging');
+            educationZone.classList.add('education-drop-active');
+        });
+        item.addEventListener('dragend', function () {
+            item.classList.remove('dragging');
+            educationZone.classList.remove('education-drop-active');
+            draggedItem = null;
+        });
+    });
+
+    list.addEventListener('dragover', function (event) {
+        if (!draggedItem) return;
+        event.preventDefault();
+        const target = event.target.closest('.experience-item');
+        if (!target || target === draggedItem) return;
+        const after = event.clientY > target.getBoundingClientRect().top + target.offsetHeight / 2;
+        list.insertBefore(draggedItem, after ? target.nextSibling : target);
+    });
+    list.addEventListener('drop', function (event) {
+        if (!draggedItem) return;
+        event.preventDefault();
+        orderForm.classList.remove('d-none');
+        const inputs = orderForm.querySelectorAll('input[name="experience_ids"]');
+        inputs.forEach(function (input) { input.remove(); });
+        list.querySelectorAll('.experience-item').forEach(function (item) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'experience_ids';
+            input.value = item.dataset.experienceId;
+            orderForm.appendChild(input);
+        });
+    });
+
+    educationZone.addEventListener('dragover', function (event) {
+        if (draggedItem) event.preventDefault();
+    });
+    educationZone.addEventListener('drop', function (event) {
+        if (!draggedItem) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const moveUrl = educationZone.dataset.moveUrl.replace('/0/move-to-education/', '/' + draggedItem.dataset.experienceId + '/move-to-education/');
+        moveForm.action = moveUrl;
+        moveForm.submit();
+    });
+});
+</script>
 {% endblock %}
