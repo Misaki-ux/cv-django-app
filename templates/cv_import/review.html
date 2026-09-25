@@ -19,7 +19,16 @@
                 {% if imported.parsed_data.full_name %}<p><strong>{% trans "Name:" %}</strong> {{ imported.parsed_data.full_name }}</p>{% endif %}
                 {% if imported.parsed_data.email %}<p><strong>{% trans "Email:" %}</strong> {{ imported.parsed_data.email }}</p>{% endif %}
                 {% if imported.parsed_data.phone %}<p><strong>{% trans "Phone:" %}</strong> {{ imported.parsed_data.phone }}</p>{% endif %}
+                {% if imported.parsed_data.address %}<p><strong>{% trans "Address:" %}</strong> {{ imported.parsed_data.address }}</p>{% endif %}
                 {% if imported.parsed_data.summary %}<p><strong>{% trans "Summary:" %}</strong> {{ imported.parsed_data.summary|truncatewords:50 }}</p>{% endif %}
+                {% if imported.parsed_data.education %}
+                <p class="mt-2"><strong>{% trans "Education:" %}</strong></p>
+                <ul>{% for item in imported.parsed_data.education %}<li>{{ item.degree }}{% if item.institution %} — {{ item.institution }}{% endif %}{% if item.start_date %} ({{ item.start_date }} – {{ item.end_date }}){% endif %}</li>{% endfor %}</ul>
+                {% endif %}
+                {% if imported.parsed_data.experience %}
+                <p class="mt-2"><strong>{% trans "Experience:" %}</strong></p>
+                <ul>{% for item in imported.parsed_data.experience %}<li>{{ item.position }}{% if item.company %} — {{ item.company }}{% endif %}{% if item.start_date %} ({{ item.start_date }} – {{ item.end_date }}){% endif %}{% if item.description %}<br>{{ item.description }}{% endif %}</li>{% endfor %}</ul>
+                {% endif %}
                 {% if imported.parsed_data.skills %}
                 <p><strong>{% trans "Skills:" %}</strong></p>
                 <div class="d-flex flex-wrap gap-1">
@@ -34,8 +43,7 @@
                 {% endif %}
             </div>
             <div class="d-flex gap-2">
-                <a href="{% url 'import_to_profile' pk=imported.pk %}" class="btn btn-primary"><i class="bi bi-person-plus"></i> {% trans "Import to Profile" %}</a>
-                <a href="{% url 'template_list' %}" class="btn btn-outline-primary"><i class="bi bi-file-earmark-plus"></i> {% trans "Create CV from this" %}</a>
+                <a href="{% url 'import_to_profile' pk=imported.pk %}" class="btn btn-primary"><i class="bi bi-file-earmark-plus"></i> {% trans "Import data and create CV" %}</a>
             </div>
             {% else %}
             <p class="text-muted">{% trans "Could not parse structured data from this CV." %}</p>
