@@ -16,7 +16,7 @@ class RegisterForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'first_name', 'last_name', 'password1', 'password2']
+        fields = ['username', 'email', 'first_name', 'last_name', 'password1', 'password2', 'consent']
 
 
 class UserForm(forms.ModelForm):
@@ -31,7 +31,7 @@ class ProfileForm(forms.ModelForm):
         fields = [
             'phone', 'address', 'city', 'country', 'postal_code',
             'date_of_birth', 'linkedin_url', 'website', 'summary',
-            'photo', 'preferred_language'
+            'photo', 'avatar', 'preferred_language'
         ]
         widgets = {
             'date_of_birth': forms.DateInput(attrs={'type': 'date'}),
@@ -63,6 +63,21 @@ class ExperienceForm(forms.ModelForm):
 
 
 class SkillForm(forms.ModelForm):
+    def clean_name(self):
+        import re
+        import unicodedata
+
+        name = unicodedata.normalize('NFKC', self.cleaned_data['name'])
+        # Imported PDFs sometimes expose font-glyph IDs instead of real text.
+        if re.search(r'\(cid:\s*\d+\)', name, re.I):
+            raise forms.ValidationError(_('This skill name came from unreadable PDF text. Please enter it again.'))
+        name = re.sub(r'[‡ƒ†…‚„�\ufffd\u0000\ue000-\uf8ff€]+', ' ', name)
+        name = re.sub(r'\.{2,}', ' ', name)
+        name = re.sub(r'\s+', ' ', name).strip(' .,:;–—-')
+        if not name or not any(char.isalpha() for char in name):
+            raise forms.ValidationError(_('Enter a readable skill name.'))
+        return name
+
     class Meta:
         model = Skill
         fields = ['name', 'level']

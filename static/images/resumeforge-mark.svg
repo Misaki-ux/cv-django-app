@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">ResumeForge document and anvil</title>
+  <path fill="#f8fafc" stroke="#0f172a" stroke-width="2" d="M7 4h34l15 15v35a5 5 0 0 1-5 5H12a5 5 0 0 1-5-5z"/>
+  <path fill="#fbbf24" d="M41 4v15h15z"/>
+  <path fill="#fbbf24" d="M13 24h30v3H13zm0 8h27v3H13zm0 8h17v3H13z"/>
+  <g stroke="#0f172a" stroke-linejoin="round" stroke-width="1.7">
+    <path fill="#f59e0b" stroke-width="2.4" d="M27 41h20l13-8v9l-12 7H39l-4 6h16v6H23v-4l7-2 4-6h-8l-5-5z"/>
+    <path fill="#fbbf24" stroke-width="1.2" d="M27 41h20l-4 6H35l-8-1z"/>
+    <path fill="#64748b" d="M31 55h20v6H23v-4l7-2z"/>
+  </g>
+</svg>

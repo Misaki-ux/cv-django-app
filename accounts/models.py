@@ -4,6 +4,22 @@ from django.utils.translation import gettext_lazy as _
 
 
 class UserProfile(models.Model):
+    AVATAR_CHOICES = [
+        ('avatars/avatar-default.png', _('Default avatar')),
+        ('avatars/avatar-boy.png', _('Boy avatar')),
+        ('avatars/avatar-girl-01.png', _('Girl avatar 1')),
+        ('avatars/avatar-girl-02.png', _('Girl avatar 2')),
+        ('avatars/avatar-girl-03.png', _('Girl avatar 3')),
+        ('avatars/avatar-hindu.png', _('Hindu avatar')),
+        ('avatars/avatar-indian.png', _('Indian avatar')),
+        ('avatars/avatar-man-01.png', _('Man avatar 1')),
+        ('avatars/avatar-man.png', _('Man avatar')),
+        ('avatars/avatar-nerd.png', _('Nerd avatar')),
+        ('avatars/avatar-tax-inspector.png', _('Tax inspector avatar')),
+        ('avatars/avatar-woman-01.png', _('Woman avatar 1')),
+        ('avatars/avatar-woman.png', _('Woman avatar')),
+        ('avatars/avatar-young-boy.png', _('Young boy avatar')),
+    ]
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     phone = models.CharField(_('Phone'), max_length=20, blank=True)
     address = models.TextField(_('Address'), blank=True)
@@ -15,6 +31,7 @@ class UserProfile(models.Model):
     website = models.URLField(_('Website'), blank=True)
     summary = models.TextField(_('Professional Summary'), blank=True)
     photo = models.ImageField(_('Photo'), upload_to='profile_photos/', blank=True)
+    avatar = models.CharField(_('Avatar'), max_length=40, choices=AVATAR_CHOICES, blank=True)
     preferred_language = models.CharField(
         _('Preferred Language'),
         max_length=2,
@@ -24,6 +41,7 @@ class UserProfile(models.Model):
     # RGPD
     consent_given = models.BooleanField(_('Data Processing Consent'), default=False)
     consent_date = models.DateTimeField(_('Consent Date'), null=True, blank=True)
+    terms_accepted_at = models.DateTimeField(_('Terms Accepted At'), null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

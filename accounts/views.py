@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -6,11 +7,36 @@ from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_POST
+from django.utils.http import url_has_allowed_host_and_scheme
 import json
 import csv
+import re
+import unicodedata
 
 from .forms import RegisterForm, UserForm, ProfileForm, EducationForm, ExperienceForm, SkillForm, LanguageForm
 from .models import UserProfile, Education, Experience, Skill, Language
+
+
+def app_information(request):
+    return render(request, 'accounts/app_info.html')
+
+
+@login_required
+def terms_acceptance(request):
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    if profile.terms_accepted_at:
+        return redirect('dashboard')
+    next_url = request.POST.get('next') or request.GET.get('next') or reverse('dashboard')
+    if not url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        next_url = reverse('dashboard')
+    if request.method == 'POST':
+        if request.POST.get('accept_terms') != 'yes':
+            messages.error(request, _('Please confirm that you have read and accept the Terms of Use.'))
+        else:
+            profile.terms_accepted_at = timezone.now()
+            profile.save(update_fields=['terms_accepted_at', 'updated_at'])
+            return redirect(next_url)
+    return render(request, 'accounts/terms_acceptance.html', {'next_url': next_url})
 
 
 def register(request):
@@ -177,14 +203,47 @@ def skills_manage(request):
                 skill.profile = profile
                 skill.save()
                 messages.success(request, _('Skill added!'))
+        elif action == 'edit':
+            skill = get_object_or_404(Skill, pk=request.POST.get('skill_id'), profile=profile)
+            form = SkillForm(request.POST, instance=skill)
+            if form.is_valid():
+                form.save()
+                messages.success(request, _('Skill updated!'))
+            else:
+                for error in form.errors.get('name', []):
+                    messages.error(request, error)
         elif action == 'delete':
             skill_id = request.POST.get('skill_id')
             Skill.objects.filter(pk=skill_id, profile=profile).delete()
             messages.success(request, _('Skill removed.'))
         return redirect('skills_manage')
     form = SkillForm()
-    skills = profile.skills.all()
-    return render(request, 'accounts/skills.html', {'form': form, 'skills': skills})
+    skills = list(profile.skills.all())
+    # Older PDF imports could save CID font markers as skill names. Those
+    # values cannot be reconstructed reliably, so discard only the corrupt
+    # record and keep the rest of the user's skills intact.
+    corrupt_skills = []
+    for skill in skills:
+        if re.search(r'\(cid:\s*\d+\)', skill.name, re.I):
+            corrupt_skills.append(skill)
+            continue
+        cleaned_name = unicodedata.normalize('NFKC', skill.name)
+        cleaned_name = re.sub(r'[‡ƒ†…‚„�\ufffd\u0000\ue000-\uf8ff€]+', ' ', cleaned_name)
+        cleaned_name = re.sub(r'\.{2,}', ' ', cleaned_name)
+        cleaned_name = re.sub(r'\s+', ' ', cleaned_name).strip(' .,:;–—-')
+        if not cleaned_name or not any(char.isalpha() for char in cleaned_name):
+            corrupt_skills.append(skill)
+        elif cleaned_name != skill.name:
+            skill.name = cleaned_name
+            skill.save(update_fields=['name'])
+    for skill in corrupt_skills:
+        skill.delete()
+    skill_forms = [(skill, SkillForm(instance=skill)) for skill in skills]
+    return render(request, 'accounts/skills.html', {
+        'form': form,
+        'skills': skills,
+        'skill_forms': skill_forms,
+    })
 
 
 @login_required
@@ -233,6 +292,7 @@ def export_data(request):
             'city': profile.city,
             'country': profile.country,
             'summary': profile.summary,
+            'avatar': profile.avatar,
         },
         'educations': list(profile.educations.values()),
         'experiences': list(profile.experiences.values()),
