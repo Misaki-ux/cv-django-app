@@ -1,6 +1,9 @@
 # CV Builder
+<img width="1607" height="931" alt="resumeforge-edit-resume-page" src="https://github.com/user-attachments/assets/56251bfe-91a1-420a-b33b-5e44b33a195b" />
 
 A Django application for managing a profile, building CVs, importing an existing CV, and downloading CVs as PDFs.
+<img width="1455" height="914" alt="resumeforge-editpage2" src="https://github.com/user-attachments/assets/2be13252-1219-4ff5-8c63-079422cc3699" />
+<img width="1085" height="913" alt="resumeforge-edit-resume-page-live-edit" src="https://github.com/user-attachments/assets/880cdccf-6b7e-46df-bc60-b29ab78f2bfd" />
 
 ## Requirements
 
