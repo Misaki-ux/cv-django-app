@@ -1,12 +1,20 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 from .models import CV, CVEducation, CVExperience, CVSkill, CVLanguage, CVTemplate
+from accounts.models import UserProfile
 
 
 class CVForm(forms.ModelForm):
+    avatar = forms.ChoiceField(
+        label=_('Avatar'),
+        choices=[('', _('Use profile photo or avatar'))] + list(UserProfile.AVATAR_CHOICES),
+        required=False,
+        widget=forms.HiddenInput(),
+    )
+
     class Meta:
         model = CV
-        fields = ['title', 'full_name', 'email', 'phone', 'address', 'summary', 'show_photo', 'photo']
+        fields = ['title', 'full_name', 'target_job_title', 'email', 'phone', 'address', 'summary', 'show_photo', 'photo', 'avatar']
         widgets = {
             'summary': forms.Textarea(attrs={'rows': 4}),
             'address': forms.Textarea(attrs={'rows': 2}),
@@ -37,6 +45,8 @@ class CVEducationForm(forms.ModelForm):
         model = CVEducation
         fields = ['institution', 'degree', 'field_of_study', 'start_date', 'end_date', 'description']
         widgets = {
+            'start_date': forms.TextInput(attrs={'placeholder': _('e.g. Sep 2020 or 09/2020')}),
+            'end_date': forms.TextInput(attrs={'placeholder': _('e.g. Jun 2024 or 06/2024')}),
             'description': forms.Textarea(attrs={'rows': 3}),
         }
 
@@ -46,6 +56,8 @@ class CVExperienceForm(forms.ModelForm):
         model = CVExperience
         fields = ['company', 'position', 'location', 'start_date', 'end_date', 'current', 'description']
         widgets = {
+            'start_date': forms.TextInput(attrs={'placeholder': _('e.g. Sep 2020 or 09/2020')}),
+            'end_date': forms.TextInput(attrs={'placeholder': _('e.g. Present or 06/2024')}),
             'description': forms.Textarea(attrs={'rows': 3}),
         }
 
@@ -60,7 +72,7 @@ class CVSkillForm(forms.ModelForm):
 
     class Meta:
         model = CVSkill
-        fields = ['name', 'level']
+        fields = ['name', 'level', 'category']
 
 
 class CVLanguageForm(forms.ModelForm):

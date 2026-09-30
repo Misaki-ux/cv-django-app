@@ -40,6 +40,8 @@ class CV(models.Model):
     title = models.CharField(_('CV Title'), max_length=200, default=_('My CV'))
     # Personal info override (optional, defaults to profile)
     full_name = models.CharField(_('Full Name'), max_length=200, blank=True)
+    avatar = models.CharField(_('CV Avatar'), max_length=40, blank=True)
+    target_job_title = models.CharField(_('Target Job Title'), max_length=200, blank=True)
     email = models.EmailField(_('Email'), blank=True)
     phone = models.CharField(_('Phone'), max_length=20, blank=True)
     address = models.TextField(_('Address'), blank=True)
@@ -54,6 +56,7 @@ class CV(models.Model):
     custom_primary_color = models.CharField(_('Custom Primary Color'), max_length=7, blank=True)
     custom_secondary_color = models.CharField(_('Custom Secondary Color'), max_length=7, blank=True)
     custom_sidebar_width = models.IntegerField(_('Sidebar Width (%)'), default=35)
+    canvas_state = models.JSONField(_('Canvas Layout'), default=dict, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -61,6 +64,14 @@ class CV(models.Model):
     @property
     def main_width(self):
         return 100 - (self.custom_sidebar_width or 35)
+
+    @property
+    def hard_skills(self):
+        return self.skills.filter(category='hard')
+
+    @property
+    def soft_skills(self):
+        return self.skills.filter(category='soft')
 
     class Meta:
         verbose_name = _('CV')
@@ -101,9 +112,14 @@ class CVExperience(models.Model):
 
 
 class CVSkill(models.Model):
+    CATEGORY_CHOICES = [
+        ('hard', _('Savoir-faire / Hard skill')),
+        ('soft', _('Savoir-être / Soft skill')),
+    ]
     cv = models.ForeignKey(CV, on_delete=models.CASCADE, related_name='skills')
     name = models.CharField(_('Skill'), max_length=100)
     level = models.IntegerField(_('Level'), default=3)
+    category = models.CharField(_('Skill Category'), max_length=10, choices=CATEGORY_CHOICES, default='hard')
     order = models.PositiveIntegerField(default=0)
 
     class Meta:
